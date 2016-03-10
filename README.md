@@ -95,7 +95,7 @@ Optional filter criteria, to filter components with a specific state or props, i
 - {props : {todo : {id : 456}}, state : {showItem : true}}
 ```
 
-The filtering is based on the [deep-match][4] library which also supports regular expressions in the filter expressions.
+The filtering is based on the [deep-match][4] library which also supports regular expressions for filtering.
 
 ### Query DSL
 
