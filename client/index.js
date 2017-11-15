@@ -19,38 +19,38 @@ if (devtools) {
 }
 
 function inject(renderer) {
-  window.__retractor = {
-    renderer: renderer,
-    findAllComponents: function (name, filter) {
-      return findAllComponentsInternal(renderer, name)
-        .filter(function (inst) {
-          return !filter || deepMatch(inst, filter);
-        });
-    },
-    findOneComponent: function (name, filter) {
-      var result = this.findAllComponents(name, filter);
-      if (result.length >= 1) return result[0];
-    },
-    findAllDOMNodes: function (name, filter) {
-      return this.findAllComponents(name, filter)
-        .map(function (inst) {
+  window.__retractor = function (name, filter, scope) {
+    return findComponentsInternal(renderer, name)
+      .filter(function (inst) {
+        return !filter || deepMatch(inst, filter);
+      })
+      .map(function (inst) {
+        // Backwards compatibility for react 0.14.*
+        if (renderer.Mount.getNodeFromInstance) {
           return renderer.Mount.getNodeFromInstance(inst);
-        });
-    },
-    findOneDOMNode: function (name, filter) {
-      var result = this.findAllDOMNodes(name, filter);
-      if (result.length >= 1) return result[0];
-    }
+        }
+
+        return renderer.ComponentTree.getNodeFromInstance(
+          inst._reactInternalInstance._renderedComponent);
+      })
+      .filter(function (node) {
+        return !scope || scope.contains(node);
+      });
   };
 }
 
-function findAllComponentsInternal(renderer, name) {
-  var root = renderer.Mount._instancesByReactRootID['.0'];
-  return find(root, function (el) {
-    var inst = el._reactInternalInstance;
-    if (!name) return inst && inst.getName;
-    return inst && inst.getName && inst.getName() === name;
+function findComponentsInternal(renderer, name) {
+  var rootInstances = renderer.Mount._instancesByReactRootID;
+  var components = Object.keys(rootInstances).map(function (key) {
+    var root = rootInstances[key];
+
+    return find(root, function (el) {
+      var inst = el._reactInternalInstance;
+      if (!name) return inst && inst.getName;
+      return inst && inst.getName && inst.getName() === name;
+    });
   });
+  return [].concat.apply([], components); // flatten tree
 }
 
 /**

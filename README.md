@@ -1,30 +1,49 @@
 # E2E Testing for React Apps
 
+[![Build Status](https://travis-ci.org/LiquidLabsGmbH/retractor.svg?branch=master)](https://travis-ci.org/LiquidLabsGmbH/retractor)
+
 Retractor exposes the internals of a React application for end-to-end testing purposes. This allows you to select DOM nodes based on the name of the React Component that rendered the node as well as its state or properties.
 
 
-> A retractor is a surgical instrument with which a surgeon can either actively separate the edges of a surgical incision or wound, or can hold back underlying organs and tissues, so that body parts under the incision may be accessed. – [Wikipedia][1]
+> A retractor is a surgical instrument with which a surgeon can either actively separate the edges of a surgical incision or wound, or can hold back underlying organs and tissues, so that body parts under the incision may be accessed. – [Wikipedia][wikipedia]
 
 ![retractor](retractor.png)
 
-## Installation
+## Example
 
-```javascript
-npm install --save retractor
+```js
+import webdriver from 'selenium-webdriver';
+import retractor from 'retractor';
+import TodoItem from './components/TodoItem';
+
+/* @jsx retractor */
+
+const driver = new webdriver.Builder().forBrowser('firefox').build();
+
+driver.get('http://localhost:3000/');
+
+// Find all TodoItems
+driver.findElements(<TodoItem />);
+
+// Find one TodoItem with a given text
+driver.findElement(<TodoItem todo={{ text: /Use retractor/ }} />);
 ```
 
-## Usage
-Retractor consists out of two parts - a client and a query DSL. The client needs to be integrated in your React App (System Under Test (SUT)) to expose its internal component structure. The query DSL provides a JSX based query language to located the DOM Nodes of your React components with [selenium-webdriver][2] locators.
+## Installation
 
-### Retractor Client
-To setup the client module you must load Retractor before React gets loaded. Internally it uses the React Dev-Tools hooks to expose the rendered component tree of your application.
+First install Retractor via npm:
 
-In a [webpack][3] based setup use the entry setting to inject Retractor before your application entry:
+```
+$ npm install --save-dev retractor
+```
+
+Next include retractor in your page __before__ React gets loaded. In a [webpack](https://webpack.github.io/) based setup this can be achieved by adding `'retractor'` to the beginning of the `entry` array:
 
 ```javascript
-module.exports = {
+// webpack.config.js
+
+var config = {
   entry: [
-    'retractor/client',
     './index' //your application entry
   ],
   output: {},
@@ -32,76 +51,35 @@ module.exports = {
   module: {
     loaders: []
   }
+};
+
+// Add retractor if not running in production
+if (process.env.NODE_ENV !== 'production') {
+  config.entry.unshift('retractor');
 }
+
+module.exports = config;
 ```
 
-### Retractor Query DSL
-Once the Retractor client module is integrated in your React Application you can easily use the query DSL in combination with selenium-webdriver locators to resolve the DOM Nodes of your components:
+You can verify that Retractor is installed by typing `__retractor` in your Browser's console.
 
-```javascript
-/* eslint-env mocha */
 
-import React from 'react'
-import {one} from 'retractor'
-import expect from 'unexpected'
-import webdriver from 'selenium-webdriver'
+## Usage
 
-import TodoItem from '../components/TodoItem'
+Once Retractor is included in your page you can use it in your Selenium tests. In order to do so, you have to add a [jsx pragma](http://babeljs.io/docs/plugins/transform-react-jsx/#custom) to your tests:
 
-describe('Retractor E2E testing', function() {
-
-  let driver
-
-  before(function() {
-    driver = new webdriver.Builder()
-    .forBrowser('firefox')
-    .build()
-  })
-
-  it('query components', function() {
-    driver.get('http://localhost:3000/')
-
-    const el = driver.findElement(one(
-      <TodoItem todo={{ text: 'Use retractor' }} />
-    ))
-
-    return expect(el, 'when fulfilled', 'to be a', webdriver.WebElement)
-  })
-})
+```js
+/* @jsx retractor */
 ```
 
-## API
+With this setting, JSX expressions will no longer translate into `React.createElement()` calls, but will use `retractor()` instead.
 
-### Client
-Once the Retractor client gets loaded, it exposes a global `__retractor` instance with the following API.
+This in turn will create a locator function that can be passed to the WebDriver [`findElement()`](http://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/index_exports_WebDriver.html#findElement) method.
 
-- `findAllComponents(name? : String, filter? : Object) : Array<Component>`
+Retractor uses [deep-match](https://www.npmjs.com/package/deep-match) to compare the specified props with the actual components. Props that are not mentioned in the locator are ignored. Functions and regular expressions in the locator will be run against the corresponding prop values.
 
-- `findOneComponent(name? : String, filter? : Object) : Array<Component>`
+[wikipedia]: https://en.wikipedia.org/wiki/Retractor_(medical)
 
-- `findAllDOMNodes(name? : String, filter? : Object) : Array<Element>`
+# License
 
-- `findOneDOMNode(name? : String, filter? : Object) : Array<Element>`
-
-#### Arguments
-###### `name : String`
-Optional name of the component to resolve. If null, all available Component types will be resolved.
-
-###### `filter : Object`
-Optional filter criteria, to filter components with a specific state or props, i.e.:
-
-```javascript
-- {props : {todo : {id : 123}}}
-- {props : {todo : {id : 456}}, state : {showItem : true}}
-```
-
-The filtering is based on the [deep-match][4] library which also supports regular expressions for filtering.
-
-### Query DSL
-
-//TODO
-
-[1]: https://en.wikipedia.org/wiki/Retractor_(medical)
-[2]: https://github.com/SeleniumHQ/selenium
-[3]: https://github.com/webpack/webpack
-[4]: https://github.com/fgnass/deep-match
+MIT

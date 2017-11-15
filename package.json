@@ -1,11 +1,22 @@
 {
   "name": "retractor",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Expose react internals for E2E testing",
-  "main": "index.js",
+  "repository": "LiquidLabsGmbH/retractor",
+  "main": "lib",
+  "browser": "./client",
   "license": "MIT",
+  "authors": [
+    "Felix Gnass <f.gnass@liquidlabs.de> (https://github.com/fgnass)",
+    "Andreas Taube <andreas.taube@codecentric.de> (https://github.com/ataube)",
+    "Christopher Flöß (https://github.com/flooose)",
+    "Sebastian Warmbrunn (https://github.com/sebashwa)"
+  ],
   "dependencies": {
-    "deep-match": "^1.0.0"
+    "deep-match": "^1.0.0",
+    "escodegen": "^1.8.0",
+    "lave": "^1.1.9",
+    "selenium-webdriver": "^2.53.1"
   },
   "devDependencies": {
     "babel-core": "^6.6.4",
@@ -16,17 +27,18 @@
     "eslint-config-airbnb": "^6.0.2",
     "eslint-plugin-react": "^4.2.0",
     "mocha": "^2.4.5",
-    "react": "^0.14.7",
-    "react-dom": "^0.14.7",
-    "selene": "*",
+    "react": "^15.0.1",
+    "react-dom": "^15.0.1",
     "unexpected": "^10.10.1",
     "webpack": "^1.12.14"
   },
   "peerDependencies": {
-    "react": "^0.14.7"
+    "react": "^0.14.7 || ^15.0.1"
   },
   "scripts": {
-    "fixture": "cd test/fixture && webpack",
-    "test": "mocha -t 60000 -r babel-register"
+    "fixture": "cd test/fixture && webpack -d",
+    "lint": "eslint .",
+    "mocha": "mocha -t 60000 -r babel-register",
+    "test": "npm run fixture && npm run lint && npm run mocha"
   }
 }
